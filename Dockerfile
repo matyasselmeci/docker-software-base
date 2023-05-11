@@ -10,7 +10,7 @@ ARG OSG_RELEASE=23
 
 LABEL maintainer OSG Software <help@osg-htc.org>
 
-RUN \
+RUN --mount=type=cache,target=/var/cache,sharing=locked \
     log () { printf "\n%s\t%s\n\n" "$(date '+%F %X %z')" "$*" ; } ; \
     # Attempt to grab the major version from the tag \
     DVER=$(egrep -o '[0-9][\.0-9]*$' <<< "$IMAGE_BASE" | cut -d. -f1); \
@@ -47,9 +47,6 @@ RUN \
         log "Installing crypto-policies-scripts (EL8)" && time \
         yum -y install crypto-policies-scripts; \
     fi && \
-    log "Cleaning up YUM metadata" && time \
-    yum clean all && \
-    rm -rf /var/cache/yum/ && \
     # Impatiently ignore the Yum mirrors
     sed -i 's/\#baseurl/baseurl/; s/mirrorlist/\#mirrorlist/' \
         /etc/yum.repos.d/osg*.repo && \
