@@ -10,7 +10,7 @@ ARG OSG_RELEASE=3.6
 
 LABEL maintainer OSG Software <help@opensciencegrid.org>
 
-RUN \
+RUN --mount=type=cache,target=/var/cache,sharing=locked \
     # Attempt to grab the major version from the tag
     DVER=$(egrep -o '[0-9][\.0-9]*$' <<< "$IMAGE_BASE" | cut -d. -f1); \
     if  [[ $DVER == 7 ]]; then \
@@ -48,8 +48,6 @@ RUN \
                    rpmdevtools \
                    /usr/bin/ps \
                    && \
-    yum clean all && \
-    rm -rf /var/cache/yum/ && \
     # Impatiently ignore the Yum mirrors
     sed -i 's/\#baseurl/baseurl/; s/mirrorlist/\#mirrorlist/' \
         /etc/yum.repos.d/osg*.repo && \
