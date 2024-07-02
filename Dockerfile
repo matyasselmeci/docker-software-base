@@ -7,6 +7,8 @@ FROM $IMAGE_BASE
 ARG IMAGE_BASE=quay.io/almalinux/almalinux:9
 ARG BASE_YUM_REPO=testing
 ARG OSG_RELEASE=23
+# Set BOOTSTRAP to true to not install OSG packages or enable OSG repos
+ARG BOOTSTRAP=false
 
 LABEL maintainer OSG Software <help@osg-htc.org>
 
@@ -44,9 +46,12 @@ RUN \
         yum-config-manager --enable crb && \
         yum-config-manager --setopt=install_weak_deps=False --save > /dev/null; \
     fi && \
-    if [[ $BASE_YUM_REPO != "release" ]]; then \
+    if [[ $BOOTSTRAP == "true" ]]; then \
+        yum-config-manager --disable 'osg*'; \
+    elif [[ $BASE_YUM_REPO != "release" ]]; then \
         yum-config-manager --enable osg-${BASE_YUM_REPO}; \
-        yum-config-manager --enable osg-upcoming-${BASE_YUM_REPO}; else \
+        yum-config-manager --enable osg-upcoming-${BASE_YUM_REPO}; \
+    else \
         yum-config-manager --enable osg-upcoming; \
     fi && \
     log "Updating EPEL/OSG YUM cache" && time \
@@ -55,20 +60,22 @@ RUN \
     yum -y install supervisor \
                    cronie \
                    fetch-crl \
-                   osg-ca-certs \
                    which \
                    less \
                    rpmdevtools \
                    fakeroot \
                    /usr/bin/ps \
                    && \
+    if [[ $BOOTSTRAP != "true" ]]; then \
+        yum -y install osg-ca-certs; \
+    fi && \
     if [[ $DVER == 8 ]]; then \
         log "Installing crypto-policies-scripts (EL8)" && time \
         yum -y install crypto-policies-scripts; \
     fi && \
     # avoid condor 23.x release candidates and dailies until we get an all clear from the devs \
     # FIXME this code can be removed once the bad versions are gone \
-    if [[ $OSG_RELEASE == 23 ]]; then \
+    if [[ $BOOTSTRAP != "true" && $OSG_RELEASE == 23 ]]; then \
         # OSG 23 implies el8+ \
         dnf -y install dnf-plugin-versionlock && \
         # versionlock locks globs, not ranges so this is annoying \
