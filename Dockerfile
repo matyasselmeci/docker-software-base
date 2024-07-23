@@ -9,6 +9,8 @@ ARG BASE_YUM_REPO=testing
 ARG OSG_RELEASE=23
 # Set BOOTSTRAP to true to not install OSG packages or enable OSG repos
 ARG BOOTSTRAP=false
+# Set ITB to true to use repo-itb
+ARG ITB=false
 
 LABEL maintainer OSG Software <help@osg-htc.org>
 
@@ -54,6 +56,12 @@ RUN \
     else \
         yum-config-manager --enable osg-upcoming; \
     fi && \
+    if [[ $ITB == "true" ]]; then \
+        sed -i -e 's/repo.opensciencegrid.org/repo-itb.opensciencegrid.org/g' /etc/yum.repos.d/*.repo; \
+    fi; \
+    # Impatiently ignore the Yum mirrors \
+    sed -i 's/\#baseurl/baseurl/; s/mirrorlist/\#mirrorlist/' \
+        /etc/yum.repos.d/osg*.repo && \
     log "Updating EPEL/OSG YUM cache" && time \
     yum makecache && \
     log "Installing common software" && time \
@@ -76,9 +84,6 @@ RUN \
     log "Cleaning up YUM metadata" && time \
     yum clean all && \
     rm -rf /var/cache/yum/ && \
-    # Impatiently ignore the Yum mirrors
-    sed -i 's/\#baseurl/baseurl/; s/mirrorlist/\#mirrorlist/' \
-        /etc/yum.repos.d/osg*.repo && \
     # Disable gpgcheck for devops, till we get them rebuilt for SOFTWARE-5422
     if [[ $OSG_RELEASE == "3.6" ]]; then \
        sed -i 's/gpgcheck=1/gpgcheck=0/' \
