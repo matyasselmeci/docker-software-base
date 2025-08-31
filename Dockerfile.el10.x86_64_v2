@@ -14,8 +14,8 @@ RUN \
     DVER=$(awk -F '[=".]+' '/^VERSION_ID=/ {print $2}' /etc/os-release); \
     log "Updating OS YUM cache" && time \
     yum makecache && \
-    log "Updating OS" && time \
-    yum distro-sync -y && \
+    # log "Updating OS" && time \
+    # yum distro-sync -y && \
     OSG_URL=https://repo.osg-htc.org/osg/${OSG_RELEASE}-main/osg-${OSG_RELEASE}-main-el${DVER}-release-latest.rpm && \
     log "Installing EPEL/OSG repo packages" && time \
     yum -y install $OSG_URL \
