@@ -27,20 +27,23 @@ jobs:
         base:
           - image: 'docker.io/library/almalinux:8'
             tag_str: 'el8'
+            platforms: 'linux/amd64,linux/arm64'
           - image: 'quay.io/almalinux/almalinux:9'
             tag_str: 'el9'
+            platforms: 'linux/amd64,linux/arm64'
           - image: 'nvidia/cuda:11.8.0-runtime-rockylinux8'
             tag_str: 'cuda_11_8_0'
-          - image: 'hub.opensciencegrid.org/osg-htc/alma10-base:combo'
-            # ^^ see scripts/create-alma10-base.sh for how this gets created
+            platforms: 'linux/amd64,linux/arm64'
+          - image: 'docker.io/almalinux/almalinux:10-base'
             tag_str: 'el10'
+            platforms: 'linux/amd64,linux/amd64/v2,linux/arm64'
         repo: ['development', 'testing', 'release']
         series: ['23', '24', '25']
         exclude:
           - series: '23'
-            base: {image: 'hub.opensciencegrid.org/osg-htc/alma10-base:combo', tag_str: 'el10'}
+            base: {tag_str: 'el10'}
           - series: '24'
-            base: {image: 'hub.opensciencegrid.org/osg-htc/alma10-base:combo', tag_str: 'el10'}
+            base: {tag_str: 'el10'}
           - series: '25'
             repo: 'release'
           - series: '25'
@@ -80,7 +83,7 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        
+
     - name: Log in to OSG Harbor
       uses: docker/login-action@v2.2.0
       with:
@@ -94,7 +97,7 @@ jobs:
       with:
         context: .
         push: true
-        platforms: 'linux/amd64,linux/arm64'
+        platforms: ${{ matrix.base.platforms }}
         build-args: |
           IMAGE_BASE=${{ matrix.base.image }}
           BASE_YUM_REPO=${{ matrix.repo }}
